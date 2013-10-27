@@ -16,6 +16,6 @@
         }
     ],
     "autoload": {
-        "classmap": ["URLResolver.php"]
+        "classmap": ["URLResolver.php", "URLResolverResult.php"]
     }
 }
