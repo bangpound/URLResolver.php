@@ -401,6 +401,7 @@ class URLResolver {
 			}
 
 			# Load the HTML DOM using PHP Simple HTML DOM
+			/** @var \Symfony\Component\DomCrawler\Crawler $html_dom */
 			$html_dom = $this->loadHTMLDOM($body);
 
 			# If the DOM could not be parsed, mark it as a fatal error. Reasonable
@@ -412,36 +413,35 @@ class URLResolver {
 			}
 
 			# If we cannot find the <head>, then we are done processing this page.
-			$head = $html_dom->find('head', 0);
-			if (!isset($head)) {
-				# If there is no <head> and no <body> tag, then we will look for an instant
-				# <meta http-equiv="refresh" tag and use that if found... We don't want to
-				# just always use the meta tag, as it is often used for noscript browsers
-				# or for long-delayed page reloads... But some pages do return just a very
-				# short noscript/meta refresh (t.co/pic.twitter.com) and it is good to catch
-				$body_tag = $html_dom->find('body', 0);
-				if (!isset($body_tag)) {
-					$meta_refresh_tag = $html_dom->find('meta[http-equiv=refresh]', 0);
-					if (isset($meta_refresh_tag->content) &&
-				    	preg_match('/^\s*(\d+)\s*;\s*URL=(.*)/i', $meta_refresh_tag->content, $matches)) {
-							if (!$matches[1] <= 2) {
-								$result->setRedirectTarget($this->fullyQualifyURI($matches[2], $url));
-							}
-					}
-				}
+			$head = $html_dom->filterXPath('//head');
+			// DOM Crawler wraps a lone meta tag in a head element.
 
-				# Don't mark as failed, some pages may just not have a <head>, but rare...
-				$this->closeHTMLDOM();
-				return $result;
+			# If there is no <head> and no <body> tag, then we will look for an instant
+			# <meta http-equiv="refresh" tag and use that if found... We don't want to
+			# just always use the meta tag, as it is often used for noscript browsers
+			# or for long-delayed page reloads... But some pages do return just a very
+			# short noscript/meta refresh (t.co/pic.twitter.com) and it is good to catch
+			$body_tag = $html_dom->filterXPath('//body');
+			if (!count($body_tag)) {
+				$meta_refresh_tag = $html_dom->filterXPath('//meta[@http-equiv=\'refresh\']');
+				if (count($meta_refresh_tag) &&
+					preg_match('/^\s*(\d+)\s*;\s*URL=(.*)/i', $meta_refresh_tag->attr('content'), $matches)) {
+						if (!$matches[1] <= 2) {
+							$result->setRedirectTarget($this->fullyQualifyURI($matches[2], $url));
+
+							# Don't mark as failed, some pages may just not have a <head>, but rare...
+							$this->closeHTMLDOM();
+							return $result;
+						}
+				}
 			}
 
 			# Determine if there are any redirects in the meta/link tags (og:url or rel=canonical)
 			$redirect_url = null;
 
 			# Locate the Open Graph URL meta tag and extract URL
-			$og_tag = $head->find('meta[property=og:url]', 0);
-			$og_url = (isset($og_tag) && isset($og_tag->content)) ?
-				$this->fullyQualifyURI($og_tag->content, $url) : null;
+			$og_tag = $head->filterXPath('//meta[@property=\'og:url\']');
+			$og_url = count($og_tag) ? $this->fullyQualifyURI($og_tag->attr('content'), $url) : null;
 
 			if (isset($og_url)) {
 				$redirect_url = $og_url;
@@ -449,9 +449,8 @@ class URLResolver {
 			}
 
 			# Open Graph takes precedence over Canonical, but it can be both...
-			$canonical_tag = $head->find('link[rel=canonical]', 0);
-			$canonical_url = ((isset($canonical_tag) && isset($canonical_tag->href))) ?
-				$this->fullyQualifyURI($canonical_tag->href, $url) : null;
+			$canonical_tag = $head->filterXPath('//link[@rel=\'canonical\']');
+			$canonical_url = count($canonical_tag) ? $this->fullyQualifyURI($canonical_tag->attr('href'), $url) : null;
 
 			if (isset($canonical_url)) {
 				if (isset($redirect_url)) {
@@ -533,8 +532,7 @@ class URLResolver {
 			$this->closeHTMLDOM();
 		}
 
-		$this->html_dom = new \simple_html_dom();
-		$this->html_dom->load($html_content);
+		$this->html_dom = new \Symfony\Component\DomCrawler\Crawler($html_content);
 		return $this->html_dom;
 	}
 

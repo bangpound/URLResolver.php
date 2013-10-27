@@ -2,6 +2,9 @@
     "name": "bangpound/url-resolver",
     "description": "attempts to resolve URLs to a final, canonical link",
     "license": "MIT",
+    "require": {
+        "symfony/dom-crawler": "~2.3"
+    },
     "authors": [
         {
             "name": "Benjamin Doherty",
@@ -13,6 +16,6 @@
         }
     ],
     "autoload": {
-        "classmap": ["URLResolver.php", "lib/simple_html_dom.php"]
+        "classmap": ["URLResolver.php"]
     }
 }
