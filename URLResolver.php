@@ -28,6 +28,7 @@
 class URLResolver
 {
     private $curl;
+    /** @var \Symfony\Component\DomCrawler\Crawler $html_dom */
     private $html_dom;
 
     private $is_debug = false;
@@ -155,6 +156,7 @@ class URLResolver
 
             $next_url = $url_result->getRedirectTarget();
             $next_url_visited_count = 0;
+            /** @var URLResolverResult $previous_result */
             foreach ($url_results as $previous_result) {
 
                 # If this result was for the same URL with the same status, then we have looped.
@@ -209,6 +211,7 @@ class URLResolver
         $fail_url_result = $redirect_url_result = null;
         $ok_url_result = $og_url_result = $canonical_url_result = null;
 
+        /** @var URLResolverResult $url_result */
         foreach (array_reverse($url_results) as $url_result) {
             if ($url_result->hasSuccessHTTPStatus()) {
                 if ($url_result->isOpenGraphURL() && !$og_url_result) {
