@@ -1,5 +1,5 @@
 #!/usr/bin/env php
-<?php require_once('../URLResolver.php');
+<?php require __DIR__ .'/../vendor/autoload.php';
 /*******************************************************************************
 * Copyright (c) 2011 by Matt Wright
 * https://github.com/mattwright/URLResolver.php

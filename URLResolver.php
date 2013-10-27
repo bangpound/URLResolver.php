@@ -1,4 +1,4 @@
-<?php require_once('lib/simple_html_dom.php');
+<?php
 /*******************************************************************************
 * Copyright (c) 2011 by Matt Wright
 * https://github.com/mattwright/URLResolver.php
